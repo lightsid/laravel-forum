@@ -26,7 +26,7 @@ class Forum
         return nl2br(e($content));
     }
 
-    public static function route(string $route, $model = null): string
+    public static function route(string $route, $model = null, string $locale = null): string
     {
         $as = config('forum.frontend.router.as');
 
@@ -34,12 +34,15 @@ class Forum
             $route = "{$as}{$route}";
         }
 
-        if ($model == null) {
-            return route($route);
+        $locale = $locale ?? app()->getLocale();
+
+        if ($model === null) {
+            return route($route, ['locale' => $locale]);
         }
 
         if ($model instanceof Category) {
             return route($route, [
+                'locale' => $locale,
                 'category_id' => $model->id,
                 'category_slug' => static::slugify($model->title, 'category'),
             ]);
@@ -47,6 +50,7 @@ class Forum
 
         if ($model instanceof Thread) {
             return route($route, [
+                'locale' => $locale,
                 'thread_id' => $model->id,
                 'thread_slug' => static::slugify($model->title),
             ]);
@@ -54,18 +58,17 @@ class Forum
 
         if ($model instanceof Post) {
             $params = [
+                'locale' => $locale,
                 'thread_id' => $model->thread->id,
                 'thread_slug' => static::slugify($model->thread->title),
             ];
+
             $append = null;
 
-            if ($route == "{$as}thread.show") {
-                // The requested route is for a thread; we need to specify the page number and append a hash for
-                // the post
+            if ($route === "{$as}thread.show") {
                 $params['page'] = $model->getPage();
                 $append = "#post-{$model->sequence}";
             } else {
-                // Other post routes require the post parameter
                 $params['post_id'] = $model->id;
             }
 
@@ -74,6 +77,7 @@ class Forum
 
         throw new \Exception('Invalid model type passed to Forum::route().');
     }
+
 
     public static function slugify(string $string, string $fallback = 'thread'): string
     {
