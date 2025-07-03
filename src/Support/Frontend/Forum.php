@@ -26,7 +26,7 @@ class Forum
         return nl2br(e($content));
     }
 
-    public static function route(string $route, $model = null, string $locale = null): string
+    public static function route(string $route, $model = null): string
     {
         $as = config('forum.frontend.router.as');
 
@@ -34,15 +34,13 @@ class Forum
             $route = "{$as}{$route}";
         }
 
-        $locale = $locale ?? app()->getLocale();
-
-        if ($model === null) {
-            return route($route, ['locale' => $locale]);
+        if ($model == null) {
+            return route($route, ['locale' => app()->getLocale()]);
         }
 
         if ($model instanceof Category) {
             return route($route, [
-                'locale' => $locale,
+                'locale' => app()->getLocale(),
                 'category_id' => $model->id,
                 'category_slug' => static::slugify($model->title, 'category'),
             ]);
@@ -50,7 +48,7 @@ class Forum
 
         if ($model instanceof Thread) {
             return route($route, [
-                'locale' => $locale,
+                'locale' => app()->getLocale(),
                 'thread_id' => $model->id,
                 'thread_slug' => static::slugify($model->title),
             ]);
@@ -58,14 +56,13 @@ class Forum
 
         if ($model instanceof Post) {
             $params = [
-                'locale' => $locale,
+                'locale' => app()->getLocale(),
                 'thread_id' => $model->thread->id,
                 'thread_slug' => static::slugify($model->thread->title),
             ];
-
             $append = null;
 
-            if ($route === "{$as}thread.show") {
+            if ($route == "{$as}thread.show") {
                 $params['page'] = $model->getPage();
                 $append = "#post-{$model->sequence}";
             } else {
